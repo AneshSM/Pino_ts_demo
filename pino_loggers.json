@@ -1,0 +1,6 @@
+{
+  "validationLogger": "validation",
+  "authLogger": "authentication",
+  "systemLogger": "system",
+  "usageLogger": "usage"
+}
