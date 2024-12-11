@@ -1,61 +1,91 @@
 import express, { Express, Request, Response, NextFunction } from "express";
-import dotenv from "dotenv";
-import Loggers from "./pino_utli";
-
-dotenv.config();
+import Loggers from "./pino_util";
 
 const app: Express = express();
 const port = process.env.PORT || 3000;
 
-// Routes
-app.get("/", (req: Request, res: Response) => {
-  Loggers.systemLogger.info("GET / request received"); // Use request logger
-  res.send("Hello, Pino Loggers!");
-});
+try {
+  // Routes
+  app.get("/validation", (req: Request, res: Response) => {
+    Loggers.validationLogger.info(
+      {
+        code: "VALIDATION_KEY_SUCCESS",
+        context: "Successull license key validation",
+      },
+      "The license key validated successfully"
+    );
+    res.send("Validation endpoint");
+  });
 
-app.get("/error", (req: Request, res: Response) => {
-  Loggers.systemLogger.error("Simulated error occurred"); // Simulate an error log
-  res.status(500).send("Something went wrong!");
-});
+  app.get("/authentication", (req: Request, res: Response) => {
+    Loggers.authLogger.error(
+      {
+        code: "AUTH_LICENSE_NOT_FOUND",
+        context: "license key not found",
+      },
+      "No matching license was found for the provided key."
+    );
+    res.send("Authentication endpoint");
+  });
 
-// Structured logging example
-app.get("/user/:id", (req: Request, res: Response) => {
-  const userId = req.params.id;
-  Loggers.usageLogger.info({ userId }, "Fetching user data");
-  res.send(`User data for user ${userId}`);
-});
+  app.get("/system", (req: Request, res: Response) => {
+    Loggers.systemLogger.warn(
+      {
+        code: "SYSTEM_INVALID_CLOCK",
+        context: "Invalid System Clock",
+      },
+      "The system clock is inaccurate. Check your system time."
+    );
+    res.send("System endpoint");
+  });
 
-// Log using child logger
-const serviceLogger = Loggers.systemLogger.child({ module: "user-service" });
+  app.get("/usage", (req: Request, res: Response) => {
+    Loggers.usageLogger.info(
+      {
+        code: "USAGE_RECORDED",
+        context: "License Usage Recorded",
+      },
+      "Usage recorded successfully for license key."
+    );
+    res.send("Usage endpoint");
+  });
 
-app.get("/child-log", (req: Request, res: Response) => {
-  serviceLogger.info("Child logger example");
-  res.send("Logged with child logger");
-});
+  // Error handling
+  app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+    Loggers.systemLogger.error(
+      {
+        code: "SERVER_ERROR",
+        context: "server error in express app",
+        error: err,
+      },
+      "Unhandled exception"
+    );
+    res.status(500).send("Internal Server Error");
+  });
 
-app.get("/file-log", (req: Request, res: Response) => {
-  Loggers.systemLogger.info("This log is handled by a worker thread");
-  res.send("Log written to file using worker thread");
-});
+  // Unhandled exceptions and rejections
+  process.on("uncaughtException", (error) => {
+    Loggers.systemLogger.error(
+      { code: "UNCAUGHT_EXCEPTION", context: "uncaught exception", error },
+      "Uncaught Exception"
+    );
+    process.exit(1);
+  });
 
-// Error handling
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  Loggers.systemLogger.error({ err }, "Unhandled exception");
-  res.status(500).send("Internal Server Error");
-});
+  process.on("unhandledRejection", (reason: any) => {
+    Loggers.systemLogger.warn(
+      { code: "UNHANDLED_REJECTION", context: "unhandled rejection", reason },
+      "Unhandled Rejection"
+    );
+  });
 
-// Unhandled exceptions and rejections
-process.on("uncaughtException", (err) => {
-  Loggers.systemLogger.fatal({ err }, "Uncaught Exception");
-  process.exit(1);
-});
-
-process.on("unhandledRejection", (reason) => {
-  Loggers.systemLogger.error({ reason }, "Unhandled Rejection");
-});
-
-// Start the server
-app.listen(port, () => {
-  Loggers.systemLogger.debug("Server started");
-  Loggers.systemLogger.info(`Server is running on http://localhost:${port}`);
-});
+  // Start the server
+  app.listen(port, () => {
+    Loggers.systemLogger.info(
+      { code: "INITIATE_SERVER", context: "server started" },
+      `Server is running on http://localhost:${port}`
+    );
+  });
+} catch (error) {
+  console.log("caught error", error);
+}

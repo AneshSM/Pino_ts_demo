@@ -1,6 +1,34 @@
 {
-  "validationLogger": "validation",
-  "authLogger": "authentication",
-  "systemLogger": "system",
-  "usageLogger": "usage"
+  "validationLogger": {
+    "category": "validation",
+    "required": {
+      "info": ["code", "context"],
+      "warn": ["code", "context"],
+      "error": ["code", "context"]
+    }
+  },
+  "authLogger": {
+    "category": "authentication",
+    "required": {
+      "info": ["code", "context"],
+      "warn": ["code", "context"],
+      "error": ["code", "context"]
+    }
+  },
+  "systemLogger": {
+    "category": "system",
+    "required": {
+      "info": ["code", "context"],
+      "warn": ["code", "context"],
+      "error": ["code", "context"]
+    }
+  },
+  "usageLogger": {
+    "category": "usage",
+    "required": {
+      "info": ["code", "context"],
+      "warn": ["code", "context"],
+      "error": ["code", "context"]
+    }
+  }
 }
