@@ -18,6 +18,7 @@ interface LoggerConfig {
   [key: string]: {
     category: string;
     required?: LoggerMethodRequiredKey;
+    redactFields?: string[];
   };
 }
 
@@ -33,6 +34,7 @@ interface LoggerInstances {
 type CommonRequiredData = {
   code: string;
   context: string;
+  [key: string]: any;
 };
 
 type ValidationLoggerMethods = {

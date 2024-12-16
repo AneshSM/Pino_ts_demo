@@ -1,6 +1,7 @@
 {
   "validationLogger": {
     "category": "validation",
+    "redactFields": ["user.password", "user.ssn", "metadata.secretKey"],
     "required": {
       "info": ["code", "context"],
       "warn": ["code", "context"],
@@ -9,6 +10,7 @@
   },
   "authLogger": {
     "category": "authentication",
+    "redactFields": ["user.password", "user.ssn", "metadata.secretKey"],
     "required": {
       "info": ["code", "context"],
       "warn": ["code", "context"],
@@ -17,6 +19,7 @@
   },
   "systemLogger": {
     "category": "system",
+    "redactFields": ["config.apiKey", "config.authToken"],
     "required": {
       "info": ["code", "context"],
       "warn": ["code", "context"],
@@ -25,6 +28,7 @@
   },
   "usageLogger": {
     "category": "usage",
+    "redactFields": ["user.password", "user.ssn", "metadata.secretKey"],
     "required": {
       "info": ["code", "context"],
       "warn": ["code", "context"],

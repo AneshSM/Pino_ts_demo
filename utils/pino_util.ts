@@ -4,14 +4,14 @@ import pino, {
   TransportMultiOptions,
   LogFn,
 } from "pino";
-import Loggers from "./pino_loggers.json";
+import Loggers from "../config/pino_loggers.json";
 import {
   LoggerConfig,
   LoggerInstances,
   LoggerMethod,
   LoggersType,
   LoggerMethodRequiredKey,
-} from "./pino_util_types";
+} from "../utils/pino_util_types";
 
 /**
  * Validates the meta data passed to the logger wrapper before passing to pino
@@ -194,9 +194,14 @@ const createTransportConfig = (
  *
  * @param loggerKey - The logger key (e.g., "validation").
  * @param loggerCategory - The logger display name (e.g., "Validation").
+ * @param {string[]} redactFields - Fields to redact in the logs.
  * @returns {Logger} - Configured pino logger instance.
  */
-const createLogger = (loggerKey: string, loggerCategory: string): Logger => {
+const createLogger = (
+  loggerKey: string,
+  loggerCategory: string,
+  redactFields: string[] = []
+): Logger => {
   try {
     const options: LoggerOptions = {
       level: "debug", // Logs messages up to the "debug" level
@@ -211,6 +216,12 @@ const createLogger = (loggerKey: string, loggerCategory: string): Logger => {
       // Merge strategy to ensure flat logging structure
       mixinMergeStrategy(mergeObject, mixinObject) {
         return { ...mergeObject, ...mixinObject };
+      },
+
+      // Redact sensitive fields
+      redact: {
+        paths: redactFields,
+        censor: "[Redacted]", // Replace sensitive fields with this value
       },
 
       // Transport configurations
@@ -242,8 +253,8 @@ const generateLoggers = (): LoggerInstances => {
           );
           return acc; // Skip invalid logger configuration
         }
-        const { category } = loggerConfig;
-        const logger = createLogger(loggerKey, category);
+        const { category, redactFields = [] } = loggerConfig;
+        const logger = createLogger(loggerKey, category, redactFields);
         acc[loggerKey] = wrapLogger(logger, loggerKey);
         return acc;
       },
