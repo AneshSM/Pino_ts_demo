@@ -1,11 +1,7 @@
 import express, { Express, Request, Response, NextFunction } from "express";
-import Loggers from "./utils/pino_util";
+import Loggers, { loggerCategory } from "./utils/pino_util";
 import { ApiError } from "./utils/error_util";
-import {
-  ErrorCategory,
-  errorHandler,
-  errorLogger,
-} from "./middleware/error.middleware";
+import { errorHandler, errorLogger } from "./middleware/error.middleware";
 
 const app: Express = express();
 const port = 3000;
@@ -13,15 +9,47 @@ const simulateFailure = false;
 
 try {
   // Routes
+  app.get("/", (req, res, next) => {
+    if (!simulateFailure) {
+      // Direct logger usage
+      Loggers.systemLogger.info(
+        { code: "HEALTH_CHECK", context: "health check call" },
+        "Health check"
+      );
+
+      // Centralized response logger interceptor usage
+      res.logger = {
+        category: loggerCategory.USAGE,
+        code: "ROOT_API",
+        context: "root api call",
+        message: "GET / request received",
+      };
+      res.send("Hello, Pino Loggers!");
+    } else {
+      // Centralized error logger middleware usage
+      next(
+        new ApiError(
+          500,
+          "Simulated error: GET / request failure",
+          null,
+          null,
+          {
+            category: loggerCategory.USAGE,
+            code: "USAGE_ROOT_ERROR",
+            context: "Failed to get all jobs",
+          }
+        )
+      );
+    }
+  });
   app.get("/validation", (req: Request, res: Response, next: NextFunction) => {
     if (!simulateFailure) {
-      Loggers.validationLogger.info(
-        {
-          code: "VALIDATION_KEY_SUCCESS",
-          context: "Successull license key validation",
-        },
-        "The license key validated successfully"
-      );
+      res.logger = {
+        category: loggerCategory.VALIDATION,
+        code: "VALIDATION_KEY_SUCCESS",
+        context: "Successull license key validation",
+        message: "The license key validated successfully",
+      };
       res.send("Validation endpoint");
     } else
       next(
@@ -31,7 +59,7 @@ try {
           null,
           null,
           {
-            category: ErrorCategory.VALIDATION,
+            category: loggerCategory.VALIDATION,
             code: "VALIDATION_KEY_SUCCESS",
             context: "Failed to get all jobs",
           }
@@ -43,13 +71,12 @@ try {
     "/authentication",
     (req: Request, res: Response, next: NextFunction) => {
       if (!simulateFailure) {
-        Loggers.authLogger.error(
-          {
-            code: "AUTH_LICENSE_SUCCESS",
-            context: "Successful authentication",
-          },
-          "Matching license was found for the provided key."
-        );
+        res.logger = {
+          category: loggerCategory.AUTHENTICATION,
+          code: "AUTH_LICENSE_SUCCESS",
+          context: "Successful authentication",
+          message: "Matching license was found for the provided key.",
+        };
         res.send("Authentication endpoint");
       } else
         next(
@@ -59,7 +86,7 @@ try {
             null,
             null,
             {
-              category: ErrorCategory.AUTHENTICATION,
+              category: loggerCategory.AUTHENTICATION,
               code: "AUTH_LICENSE_NOT_FOUND",
               context: "license key not found",
               message: "No matching license was found for the provided key.",
@@ -71,13 +98,12 @@ try {
 
   app.get("/system", (req: Request, res: Response, next: NextFunction) => {
     if (!simulateFailure) {
-      Loggers.systemLogger.warn(
-        {
-          code: "SYSTEM_CLOCK",
-          context: "System Clock",
-        },
-        "The system clock: " + new Date().toLocaleString()
-      );
+      res.logger = {
+        category: loggerCategory.SYSTEM,
+        code: "SYSTEM_CLOCK",
+        context: "System Clock",
+        message: "The system clock: " + new Date().toLocaleString(),
+      };
       res.send("System endpoint");
     } else
       next(
@@ -87,7 +113,7 @@ try {
           null,
           null,
           {
-            category: ErrorCategory.SYSTEM,
+            category: loggerCategory.SYSTEM,
             code: "SYSTEM_INVALID_CLOCK",
             context: "Invalid System Clock",
             message: "The system clock is inaccurate. Check your system time.",
@@ -98,13 +124,12 @@ try {
 
   app.get("/usage", (req: Request, res: Response, next: NextFunction) => {
     if (!simulateFailure) {
-      Loggers.usageLogger.info(
-        {
-          code: "USAGE_RECORDED",
-          context: "License Usage Recorded",
-        },
-        "Usage recorded successfully for license key."
-      );
+      res.logger = {
+        category: loggerCategory.USAGE,
+        code: "USAGE_RECORDED",
+        context: "License Usage Recorded",
+        message: "Usage recorded successfully for license key.",
+      };
       res.send("Usage endpoint");
     } else
       next(
@@ -114,7 +139,7 @@ try {
           null,
           null,
           {
-            category: ErrorCategory.USAGE,
+            category: loggerCategory.USAGE,
             code: "USAGE_QUOTA_EXCEEDED",
             context: "License Quota Exceeded",
             message: "License usage limit exceeded.",
@@ -126,21 +151,20 @@ try {
   app.get("/user/:id", (req: Request, res: Response, next: NextFunction) => {
     if (!simulateFailure) {
       const userId = req.params.id;
-      Loggers?.usageLogger?.info(
-        {
-          code: "USER_DATA_ACCESS",
-          context: "user data api call",
+      res.logger = {
+        category: loggerCategory.USAGE,
+        code: "USER_DATA_ACCESS",
+        context: "user data api call",
+        message: "Fetching user data",
+        metadata: {
+          secretKey: "cscdcsdwq3453",
           user: {
             userId,
             password: "1234",
             ssn: "65432vsdc",
           },
-          metadata: {
-            secretKey: "cscdcsdwq3453",
-          },
         },
-        "Fetching user data"
-      );
+      };
       res.send(`User data for user ${userId}`);
     } else
       next(
@@ -150,7 +174,7 @@ try {
           null,
           null,
           {
-            category: ErrorCategory.USAGE,
+            category: loggerCategory.USAGE,
             code: "USER_DATA_ACCESS_ERROR",
             context: "Failed to valdate user access",
             message: "Unauthorized user access",

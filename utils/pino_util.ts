@@ -13,6 +13,14 @@ import {
   LoggerMethodRequiredKey,
 } from "../utils/pino_util_types";
 
+// Enum for Error Categories
+export enum loggerCategory {
+  SYSTEM = "system",
+  AUTHENTICATION = "authentication",
+  VALIDATION = "validation",
+  USAGE = "usage",
+}
+
 /**
  * Validates the meta data passed to the logger wrapper before passing to pino
  * methods and ensures it has the required fields.
@@ -133,7 +141,7 @@ const validateLoggerConfig = (config: LoggerConfig): LoggerConfig => {
 const generateLogFilePath = (parent: string, context: string): string => {
   try {
     const date = new Date().toISOString().split("T")[0]; // Format: YYYY-MM-DD
-    return `./logs/${parent}/${context}-${date}.log`;
+    return `./logs/${parent}/${context}/${context}-${date}.log`;
   } catch (error) {
     console.error("Error generating log file path:", error);
     throw new Error("Failed to generate log file path.");

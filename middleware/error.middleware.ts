@@ -1,15 +1,7 @@
 import { AxiosError } from "axios";
 import { Request, Response, NextFunction } from "express";
 import { ApiError, CustomError, FS_Error, GitError } from "../utils/error_util";
-import loggers from "../utils/pino_util.js";
-
-// Enum for Error Categories
-export enum ErrorCategory {
-  SYSTEM = "system",
-  AUTHENTICATION = "authentication",
-  VALIDATION = "validation",
-  USAGE = "usage",
-}
+import loggers, { loggerCategory } from "../utils/pino_util.js";
 
 // Type for logged data in logger
 type CommonRequiredData = {
@@ -33,14 +25,14 @@ type CustomErrorWithData = CustomError & {
 
 // Function to get the appropriate logger method based on category and warning status
 const getLoggerMethod = (category: string, isWarning: boolean) => {
-  const logCategory: { [key in ErrorCategory]: any } = {
-    [ErrorCategory.SYSTEM]: loggers.systemLogger,
-    [ErrorCategory.AUTHENTICATION]: loggers.authLogger,
-    [ErrorCategory.VALIDATION]: loggers.validationLogger,
-    [ErrorCategory.USAGE]: loggers.usageLogger,
+  const logCategory: { [key in loggerCategory]: any } = {
+    [loggerCategory.SYSTEM]: loggers.systemLogger,
+    [loggerCategory.AUTHENTICATION]: loggers.authLogger,
+    [loggerCategory.VALIDATION]: loggers.validationLogger,
+    [loggerCategory.USAGE]: loggers.usageLogger,
   };
 
-  const logger = logCategory[category as ErrorCategory];
+  const logger = logCategory[category as loggerCategory];
   return isWarning ? logger?.warn : logger?.error;
 };
 
