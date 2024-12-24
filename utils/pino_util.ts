@@ -13,6 +13,21 @@ import {
   LoggerMethodRequiredKey,
 } from "../utils/pino_util_types";
 
+/**
+ * @interface LoggerData
+ * @property {string} category
+ * @property {string} code
+ * @property {string} context
+ * @property {string | undefined} message
+ */
+export interface LoggerData {
+  category: string;
+  code: string;
+  context: string;
+  message?: string;
+  [key: string]: any;
+}
+
 // Enum for Error Categories
 export enum loggerCategory {
   SYSTEM = "system",
