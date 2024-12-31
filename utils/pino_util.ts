@@ -52,23 +52,39 @@ const validateFields = (
   schema: LoggerConfig,
   obj: Record<string, unknown>
 ): void => {
-  const requiredFields = schema[loggerKey]?.["required"]?.[method] || [];
-  if ((typeof obj !== "object" || !obj) && requiredFields.length > 0) {
-    throw new Error(
-      `Missing required fields for ${loggerKey}.${method}: ${requiredFields.join(
-        ", "
-      )}`
-    );
-  } else {
-    const missingFields = requiredFields.filter((field) => !(field in obj));
+  try {
+    const loggerConfig = schema?.loggers?.[loggerKey];
+    const commonRequiredFields = schema?.common?.requiredFields?.[method] || [];
+    const customRequiredFields =
+      loggerConfig?.customRequiredFields?.[method] || [];
 
-    if (missingFields.length > 0) {
-      throw new Error(
-        `Missing required fields for ${loggerKey}.${method}: ${missingFields.join(
-          ", "
-        )}`
-      );
+    // Merge common and custom fields (custom overrides common if specified)
+    const requiredFields = [
+      ...new Set([...commonRequiredFields, ...customRequiredFields]),
+    ];
+
+    // const requiredFields = schema[loggerKey]?.["required"]?.[method] || [];
+    if (typeof obj !== "object" || !obj) {
+      if (requiredFields?.length > 0)
+        throw new Error(
+          `Missing required fields for ${loggerKey}.${method}: ${requiredFields.join(
+            ", "
+          )}`
+        );
+    } else {
+      const missingFields = requiredFields.filter((field) => !(field in obj));
+
+      if (missingFields?.length > 0) {
+        throw new Error(
+          `Missing required fields for ${loggerKey}.${method}: ${missingFields.join(
+            ", "
+          )}`
+        );
+      }
     }
+  } catch (error) {
+    console.log("Error while validating fields", error);
+    throw error;
   }
 };
 
@@ -133,7 +149,7 @@ const validateLoggerConfig = (config: LoggerConfig): LoggerConfig => {
   }
 
   // Ensure all keys and values are strings
-  Object.entries(config).forEach(([key, value]) => {
+  Object.entries(config.loggers).forEach(([key, value]) => {
     if (
       typeof key !== "string" ||
       typeof value !== "object" ||
@@ -188,6 +204,9 @@ const createTransportConfig = (
           destination: generateLogFilePath(loggerCategory, "error"),
           mkdir: true, // Automatically create missing directories
         },
+        worker: {
+          autoEnd: true, // Enables auto-closing of the worker when the process ends
+        },
       },
       {
         target: "pino/file",
@@ -196,6 +215,9 @@ const createTransportConfig = (
           destination: generateLogFilePath(loggerCategory, "warn"),
           mkdir: true,
         },
+        worker: {
+          autoEnd: true, // Enables auto-closing of the worker when the process ends
+        },
       },
       {
         target: "pino/file",
@@ -203,6 +225,9 @@ const createTransportConfig = (
         options: {
           destination: generateLogFilePath(loggerCategory, "info"),
           mkdir: true,
+        },
+        worker: {
+          autoEnd: true, // Enables auto-closing of the worker when the process ends
         },
       },
     ];
@@ -267,8 +292,8 @@ const createLogger = (
 const generateLoggers = (): LoggerInstances => {
   try {
     const config = validateLoggerConfig(Loggers);
-
-    return Object.entries(config).reduce<LoggerInstances>(
+    const { loggers: loggersConfig, common: commonConfig } = config;
+    return Object.entries(loggersConfig).reduce<LoggerInstances>(
       (acc, [loggerKey, loggerConfig]) => {
         if (!loggerKey || !loggerConfig || !loggerConfig.category) {
           console.warn(
@@ -277,7 +302,10 @@ const generateLoggers = (): LoggerInstances => {
           return acc; // Skip invalid logger configuration
         }
         const { category, redactFields = [] } = loggerConfig;
-        const logger = createLogger(loggerKey, category, redactFields);
+        const logger = createLogger(loggerKey, category, [
+          ...(commonConfig?.redactFields || []),
+          ...redactFields,
+        ]);
         acc[loggerKey] = wrapLogger(logger, loggerKey);
         return acc;
       },

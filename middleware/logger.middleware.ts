@@ -76,7 +76,10 @@ const loggerMiddleware = (
   const { statusCode, message, logger } = apiResult;
   if (logger) {
     const { category, ...restLogger } = logger;
-
+    if (!restLogger.message) restLogger.message = apiResult.message;
+    if (apiResult instanceof ApiError) {
+      restLogger["error"] = apiResult.error;
+    }
     const status =
       statusCode < 400
         ? "success"

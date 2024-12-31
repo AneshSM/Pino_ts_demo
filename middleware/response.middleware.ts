@@ -31,7 +31,7 @@ const handleAxiosError = (err: AxiosError): void => {
 };
 
 // Response and Error handler middleware
-const responseErrorHandler = (
+const responseHandler = (
   apiResult: ApiResponse | AxiosError | ApiError,
   req: Request,
   res: Response,
@@ -64,4 +64,4 @@ const responseErrorHandler = (
   }
 };
 
-export default responseErrorHandler;
+export default responseHandler;

@@ -1,38 +1,39 @@
 {
-  "validationLogger": {
-    "category": "validation",
-    "redactFields": ["user.password", "user.ssn", "metadata.secretKey"],
-    "required": {
+  "common": {
+    "requiredFields": {
       "info": ["code", "context"],
       "warn": ["code", "context"],
-      "error": ["code", "context"]
-    }
+      "error": ["code", "context", "error"]
+    },
+    "redactFields": [
+      "metadata.user.password",
+      "metadata.user.ssn",
+      "metadata.secretKey"
+    ]
   },
-  "authLogger": {
-    "category": "authentication",
-    "redactFields": ["user.password", "user.ssn", "metadata.secretKey"],
-    "required": {
-      "info": ["code", "context"],
-      "warn": ["code", "context"],
-      "error": ["code", "context"]
-    }
-  },
-  "systemLogger": {
-    "category": "system",
-    "redactFields": ["config.apiKey", "config.authToken"],
-    "required": {
-      "info": ["code", "context"],
-      "warn": ["code", "context"],
-      "error": ["code", "context"]
-    }
-  },
-  "usageLogger": {
-    "category": "usage",
-    "redactFields": ["user.password", "user.ssn", "metadata.secretKey"],
-    "required": {
-      "info": ["code", "context"],
-      "warn": ["code", "context"],
-      "error": ["code", "context"]
+  "loggers": {
+    "validationLogger": {
+      "category": "validation",
+      "customRequiredFields": {
+        "warn": ["customAction"],
+        "error": ["validationStep"]
+      }
+    },
+    "authLogger": {
+      "category": "authentication",
+      "customRequiredFields": {
+        "error": ["authMethod"]
+      }
+    },
+    "systemLogger": {
+      "category": "system",
+      "customRequiredFields": {
+        "fatal": ["serviceName"]
+      },
+      "redactFields": ["metadata.config.apiKey", "metadata.config.authToken"]
+    },
+    "usageLogger": {
+      "category": "usage"
     }
   }
 }

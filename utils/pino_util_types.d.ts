@@ -15,10 +15,16 @@ type LoggerMethod = keyof LoggerMethodRequiredKey;
  * Type for the `loggers.json` configuration file.
  */
 interface LoggerConfig {
-  [key: string]: {
-    category: string;
-    required?: LoggerMethodRequiredKey;
+  common: {
+    requiredFields?: LoggerMethodRequiredKey;
     redactFields?: string[];
+  };
+  loggers: {
+    [key: string]: {
+      category: string;
+      customRequiredFields?: LoggerMethodRequiredKey;
+      redactFields?: string[];
+    };
   };
 }
 
